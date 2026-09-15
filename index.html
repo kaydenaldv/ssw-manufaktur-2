@@ -1,0 +1,842 @@
+<gai_file format="html" filename="index.html" title="Simulasi Ujian SSW Manufaktur (Jepang + Furigana)">
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>製造業特定技能評価試験 シミュレーション</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        body {
+            font-family: "Hiragino Kaku Gothic ProN", "Meiryo", "Yu Gothic", sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #c0c0c0;
+            color: #000;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+        header {
+            background-color: #003366;
+            color: white;
+            padding: 8px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #001f3f;
+            height: 55px;
+        }
+        header h1 {
+            font-size: 15px;
+            margin: 0;
+            font-weight: bold;
+            line-height: 1.2;
+        }
+        .header-info {
+            display: flex;
+            gap: 20px;
+            font-size: 14px;
+        }
+        .timer-box {
+            background-color: #000;
+            color: #00ff00;
+            font-family: monospace;
+            padding: 3px 8px;
+            border: 1px solid #777;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .main-container {
+            display: flex;
+            flex: 1;
+            height: calc(100vh - 105px);
+            background-color: #e0e0e0;
+        }
+
+        .sidebar {
+            width: 260px;
+            background-color: #d4d0c8;
+            border-right: 2px solid #808080;
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+        }
+        .sidebar-header {
+            font-weight: bold;
+            font-size: 13px;
+            margin-bottom: 8px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid #a0a0a0;
+        }
+        .nav-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 4px;
+            overflow-y: auto;
+            flex: 1;
+            padding-right: 4px;
+        }
+        .nav-btn {
+            background-color: #f0f0f0;
+            border: 1px solid #707070;
+            padding: 6px 0;
+            font-size: 12px;
+            cursor: pointer;
+            text-align: center;
+            font-weight: bold;
+            border-radius: 2px;
+        }
+        .nav-btn:hover { background-color: #e0e0e0; }
+        .nav-btn.active { background-color: #003366; color: white; border-color: #001f3f; }
+        .nav-btn.answered { background-color: #cce5ff; border-color: #0056b3; color: #004085; }
+        .nav-btn.flagged { border: 2px solid #dc3545; position: relative; }
+        .nav-btn.flagged::after {
+            content: "★";
+            color: #dc3545;
+            position: absolute;
+            top: -2px;
+            right: 1px;
+            font-size: 10px;
+        }
+
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: #ffffff;
+            margin: 8px;
+            border: 2px solid #808080;
+            box-shadow: inset 1px 1px 0px #fff;
+        }
+        .question-header {
+            background-color: #eeeeee;
+            padding: 10px 15px;
+            border-bottom: 1px solid #ccc;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .flag-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            color: #b30000;
+        }
+        .question-body {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+            font-size: 16px;
+            line-height: 2;
+        }
+        .question-text {
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #111;
+        }
+        
+        ruby rt {
+            font-size: 0.6em;
+            color: #003366;
+        }
+
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .option-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 12px 14px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.15s;
+            background-color: #fafafa;
+        }
+        .option-item:hover {
+            background-color: #f0f4f8;
+            border-color: #999;
+        }
+        .option-item input {
+            margin-top: 6px;
+            margin-right: 12px;
+            cursor: pointer;
+        }
+        .option-label {
+            cursor: pointer;
+            flex: 1;
+            line-height: 1.8;
+        }
+
+        footer {
+            background-color: #d4d0c8;
+            border-top: 2px solid #ffffff;
+            padding: 8px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 50px;
+        }
+        .btn-group { display: flex; gap: 10px; }
+        .btn {
+            padding: 6px 16px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            border: 2px solid;
+            border-color: #ffffff #808080 #808080 #ffffff;
+            background-color: #d4d0c8;
+            color: #000;
+            min-width: 90px;
+        }
+        .btn:active { border-color: #808080 #ffffff #ffffff #808080; }
+        .btn-primary { background-color: #003366; color: white; border-color: #336699 #001f3f #001f3f #336699; }
+        .btn-danger { background-color: #8b0000; color: white; border-color: #b22222 #550000 #550000 #b22222; }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0,0,0,0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+        }
+        .modal-card {
+            background: white;
+            padding: 25px;
+            border-radius: 6px;
+            width: 90%;
+            max-width: 700px;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        .modal-card h2 {
+            margin-top: 0;
+            color: #003366;
+            border-bottom: 2px solid #003366;
+            padding-bottom: 8px;
+        }
+        .score-summary {
+            display: flex;
+            justify-content: space-around;
+            background: #f4f6f9;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+            text-align: center;
+        }
+        .score-box h3 { margin: 0; font-size: 24px; color: #003366; }
+        .score-box p { margin: 4px 0 0 0; font-size: 12px; color: #666; }
+        .pass-status {
+            font-size: 18px;
+            font-weight: bold;
+            padding: 8px;
+            text-align: center;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+        .status-pass { background-color: #d4edda; color: #155724; }
+        .status-fail { background-color: #f8d7da; color: #721c24; }
+
+        .explanation-item {
+            border-bottom: 1px solid #eee;
+            padding: 12px 0;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+        .explanation-item.correct { border-left: 4px solid #28a745; padding-left: 10px; }
+        .explanation-item.incorrect { border-left: 4px solid #dc3545; padding-left: 10px; }
+
+        @media (max-width: 768px) {
+            .main-container { flex-direction: column; }
+            .sidebar { width: 100%; height: 120px; }
+            .nav-grid { grid-template-columns: repeat(10, 1fr); }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1><ruby>製造業特定技能<rt>せいぞうぎょうとくていぎのう</rt></ruby>1<ruby>号評価試験<rt>ごうひょうかしけん</rt></ruby> <ruby>模擬試験<rt>もぎしけん</rt></ruby></h1>
+        <div class="header-info">
+            <div><ruby>残<rt>のこ</rt></ruby>り<ruby>時間<rt>じかん</rt></ruby>: <span id="timer" class="timer-box">60:00</span></div>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <div class="sidebar">
+            <div class="sidebar-header"><ruby>問題一覧<rt>もんだいいちらん</rt></ruby> (40<ruby>問<rt>もん</rt></ruby>)</div>
+            <div class="nav-grid" id="nav-grid"></div>
+        </div>
+
+        <div class="content-area">
+            <div class="question-header">
+                <span id="q-number">問題 1 / 40</span>
+                <label class="flag-checkbox">
+                    <input type="checkbox" id="flag-check" onchange="toggleFlag()"> <ruby>見直<rt>みなお</rt></ruby>しチェック (Flag)
+                </label>
+            </div>
+            <div class="question-body">
+                <div class="question-text" id="q-text">Loading...</div>
+                <div class="options-list" id="options-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="btn-group">
+            <button class="btn btn-danger" onclick="confirmSubmit()"><ruby>試験終了<rt>しけんしゅうりょう</rt></ruby></button>
+        </div>
+        <div class="btn-group">
+            <button class="btn" id="btn-prev" onclick="prevQuestion()">◄ <ruby>前<rt>まえ</rt></ruby>へ</button>
+            <button class="btn" id="btn-next" onclick="nextQuestion()"><ruby>次<rt>つぎ</rt></ruby>へ ►</button>
+        </div>
+    </footer>
+
+    <div class="modal-overlay" id="result-modal">
+        <div class="modal-card">
+            <h2><ruby>試験結果<rt>しけんけっか</rt></ruby></h2>
+            <div id="pass-status" class="pass-status"></div>
+            
+            <div class="score-summary">
+                <div class="score-box">
+                    <h3 id="final-score">0%</h3>
+                    <p><ruby>得点率<rt>とくてんりつ</rt></ruby></p>
+                </div>
+                <div class="score-box">
+                    <h3 id="correct-count">0 / 40</h3>
+                    <p><ruby>正解数<rt>せいかいすう</rt></ruby></p>
+                </div>
+                <div class="score-box">
+                    <h3>65%</h3>
+                    <p><ruby>合格基準<rt>ごうかくきじゅん</rt></ruby></p>
+                </div>
+            </div>
+
+            <h3><ruby>解説<rt>かいせつ</rt></ruby> & <ruby>解答<rt>かいとう</rt></ruby>:</h3>
+            <div id="explanation-list"></div>
+
+            <div style="text-align: right; margin-top: 20px;">
+                <button class="btn btn-primary" onclick="location.reload()"><ruby>もう一度受ける<rt>いちどうける</rt></ruby></button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            // 第一部：〇×問題 (30問)
+            { 
+                id: 1, type: "TF", 
+                question: "<ruby>作業着<rt>さぎょうぎ</rt></ruby>は、<ruby>自分<rt>じぶん</rt></ruby>が<ruby>動<rt>うご</rt></ruby>きやすいものであれば、サンダルやだぶだぶの<ruby>服<rt>ふく</rt></ruby>でもよい。", 
+                options: ["正しい (〇)", "正しくない (×)"], 
+                answer: 1, 
+                exp: "正しくない。<ruby>作業着<rt>さぎょうぎ</rt></ruby>は<ruby>巻<rt>ま</rt></ruby>き<ruby>込<rt>こ</rt></ruby>まれ事故を防ぐため、サイズが合い、袖口などが締まったものを正しく着用しなければなりません。" 
+            },
+            { 
+                id: 2, type: "TF", 
+                question: "<ruby>機械<rt>きかい</rt></ruby>から<ruby>異常<rt>いじょう</rt></ruby>な<ruby>音<rt>おと</rt></ruby>やにおいがした<ruby>場合<rt>ばあい</rt></ruby>は、すぐに<ruby>機械<rt>きかい</rt></ruby>を<ruby>止<rt>と</rt></ruby>めて、<ruby>上司<rt>じょうし</rt></ruby>（リーダー）に<ruby>報告<rt>ほうこく</rt></ruby>する。", 
+                options: ["正しい (〇)", "正しくない (×)"], 
+                answer: 0, 
+                exp: "正しい。<ruby>異常<rt>いじょう</rt></ruby>を<ruby>発見<rt>はっけん</rt></ruby>したときは「<ruby>機械<rt>きかい</rt></ruby>を<ruby>止<rt>と</rt></ruby>める・<ruby>上司<rt>じょうし</rt></ruby>に<ruby>報告<rt>ほうこく</rt></ruby>する」が<ruby>鉄則<rt>てっそく</rt></ruby>です。" 
+            },
+            { 
+                id: 3, type: "TF", 
+                question: "5S<ruby>活動<rt>かつどう</rt></ruby>の「整頓（せいとん）」とは、<ruby>要<rt>い</rt></ruby>らないものを<ruby>捨<rt>す</rt></ruby>てることである。", 
+                options: ["正しい (〇)", "正しくない (×)"], 
+                answer: 1, 
+                exp: "正しくない。<ruby>要<rt>い</rt></ruby>らないものを<ruby>捨<rt>す</rt></ruby>てるのは「<ruby>整理<rt>せいり</rt></ruby>」です。「<ruby>整頓<rt>せいとん</rt></ruby>」は、<ruby>置<rt>お</rt></ruby>き<ruby>場所<rt>ばしょ</rt></ruby>を<ruby>決<rt>き</rt></ruby>めてすぐに<ruby>取<rt>と</rt></ruby>り<ruby>出<rt>だ</rt></ruby>せるようにすることです。" 
+            },
+            { 
+                id: 4, type: "TF", 
+                question: "三定（さんてい）とは、「<ruby>定位置<rt>ていいち</rt></ruby>」「<ruby>定理<rt>ていり</rt></ruby>」「<ruby>定量<rt>ていりょう</rt></ruby>」のことである。", 
+                options: ["正しい (〇)", "正しくない (×)"], 
+                answer: 1, 
+                exp: "正しくない。三定は「<ruby>定位置<rt>ていいち</rt></ruby>」「<ruby>定品<rt>ていひん</rt></ruby>」「<ruby>定量<rt>ていりょう</rt></ruby>」です。" 
+            },
+            { 
+                id: 5, type: "TF", 
+                question: "ボール<ruby>盤<rt>ばん</rt></ruby>などの<ruby>回転<rt>かいてん</rt></ruby>する<ruby>機械<rt>きかい</rt></ruby>で<ruby>作業<rt>さぎょう</rt></ruby>するときは、<ruby>軍手<rt>ぐんて</rt></ruby>（手袋）を着用しなければならない。", 
+                options: ["正しい (〇)", "正しくない (×)"], 
+                answer: 1, 
+                exp: "正しくない。<ruby>回転<rt>かいてん</rt></ruby><ruby>機器<rt>きき</rt></ruby>での手袋着用は、手袋が<ruby>巻<rt>ま</rt></ruby>き<ruby>込<rt>こ</rt></ruby>まれて大けがをする<ruby>危険<rt>きけん</rt></ruby>があるため【<ruby>禁止<rt>きんし</rt></ruby>】です。" 
+            },
+            { 
+                id: 6, type: "TF", 
+                question: "ハインリッヒの<ruby>法則<rt>ほうそく</rt></ruby>では、1件の<ruby>重大<rt>じゅうだい</rt></ruby>事故のうしろには、29件の<ruby>軽傷<rt>けいしょう</rt></ruby>事故と、300件のヒヤリ・ハットが<ruby>存在<rt>そんざい</rt></ruby>するとされている。", 
+                options: ["正しい (〇)", "正しくない (×)"], 
+                answer: 0, 
+                exp: "正しい。1：29：300の<ruby>比率<rt>ひりつ</rt></ruby>で事故とヒヤリハットが<ruby>発生<rt>はっせい</rt></ruby>します。" 
+            },
+            { 
+                id: 7, type: "TF", 
+                question: "<ruby>重<rt>おも</rt></ruby>い<ruby>物<rt>もの</rt></ruby>を持ち上げるときは、<ruby>膝<rt>ひざ</rt></ruby>を曲げずに<ruby>腰<rt>こし</rt></ruby>だけを曲げて持ち上げるのが正しい。", 
+                options: ["正しい (〇)", "正しくない (×)"], 
+                answer: 1, 
+                exp: "正しくない。<ruby>腰痛<rt>ようつう</rt></ruby>を防ぐため、<ruby>重心<rt>じゅうしん</rt></ruby>を低くし、<ruby>膝<rt>ひざ</rt></ruby>をしっかり曲げて身体を引き寄せて持ち上げます。" 
+            },
+            { 
+                id: 8, type: "TF", 
+                question: "SDS（<ruby>化学物質<rt>かがくぶっしつ</rt></ruby><ruby>安全性<rt>あんぜんせい</rt></ruby>データシート）には、<ruby>危険性<rt>きけんせい</rt></ruby>や<ruby>有害性<rt>ゆうがいせい</rt></ruby>、<ruby>取扱い<rt>とりあつかい</rt></ruby>上の<ruby>注意<rt>ちゅうい</rt></ruby>が書かれている。", 
+                options: ["正しい (〇)", "正しくない (×)"], 
+                answer: 0, 
+                exp: "正しい。SDSは<ruby>化学物質<rt>かがくぶっしつ</rt></ruby>の<ruby>安全<rt>あんぜん</rt></ruby><ruby>情報<rt>じょうほう</rt></ruby>がまとめられた書類です。" 
+            },
+            { 
+                id: 9, type: "TF", 
+                question: "<ruby>品質<rt>ひんしつ</rt></ruby>（Quality）とは、<ruby>作り手<rt>つくりて</rt></ruby>（工場）が満足すれば、<ruby>客<rt>きゃく</rt></ruby>（顧客）の要望は関係ない。", 
+                options: ["正しい (〇)", "正しくない (×)"], 
+                answer: 1, 
+                exp: "正しくない。<ruby>品質<rt>ひんしつ</rt></ruby>とは「<ruby>顧客<rt>こきゃく</rt></ruby>（買う人）の<ruby>要求<rt>ようきゅう</rt></ruby>を満たすこと」です。" 
+            },
+            { 
+                id: 10, type: "TF", 
+                question: "PDCAサイクルの「C」は、<ruby>計画<rt>けいかく</rt></ruby>（Plan）に沿って<ruby>実行<rt>じっこう</rt></ruby>した結果を<ruby>評価<rt>ひょうか</rt></ruby>・<ruby>確認<rt>かくにん</rt></ruby>する（Check）ことである。", 
+                options: ["正しい (〇)", "正しくない (×)"], 
+                answer: 0, 
+                exp: "正しい。Plan（<ruby>計画<rt>けいかく</rt></ruby>）→ Do（<ruby>実行<rt>じっこう</rt></ruby>）→ Check（<ruby>評価<rt>ひょうか</rt></ruby>）→ Act（<ruby>改善<rt>かいぜん</rt></ruby>）の流れです。" 
+            },
+            { 
+                id: 11, type: "TF", 
+                question: "三現主義（さんげんしゅぎ）とは、「<ruby>現場<rt>げんば</rt></ruby>」「<ruby>現物<rt>げんぶつ</rt></ruby>」「<ruby>現実<rt>げんじつ</rt></ruby>」を大切にする考え方である。", 
+                options: ["正しい (〇)", "正しくない (×)"], 
+                answer: 0, 
+                exp: "正しい。<ruby>問題<rt>もんだい</rt></ruby>が起きたら現場に行き、現物を見て、現実を把握して対処します。" 
+            },
+            { 
+                id: 12, type: "TF", 
+                question: "パレート<ruby>図<rt>ず</rt></ruby>は、不良の原因などの項目を「<ruby>件数<rt>けんすう</rt></ruby>の多い順」に並べた棒グラフと折れ線グラフの複合図である。", 
+                options: ["正しい (〇)", "正しくない (×)"], 
+                answer: 0, 
+                exp: "正しい。優先して対策すべき原因を見つけるために使われます。" 
+            },
+            { 
+                id: 13, type: "TF", 
+                question: "JISとは、<ruby>日本産業規格<rt>にほんさんぎょうきかく</rt></ruby>（Japanese Industrial Standards）の略称である。", 
+                options: ["正しい (〇)", "正しくない (×)"], 
+                answer: 0, 
+                exp: "正しい。日本の産業製品の標準規格です。" 
+            },
+            { 
+                id: 14, type: "TF", 
+                question: "pH（ペーハー）の値が「7未満（数値が小さい）」の溶液は、アルカリ性である。", 
+                options: ["正しい (〇)", "正しくない (×)"], 
+                answer: 1, 
+                exp: "正しくない。pH7未満は「<ruby>酸性<rt>さんせい</rt></ruby>」です。pH7より大きいものが「アルカリ性」です。" 
+            },
+            { 
+                id: 15, type: "TF", 
+                question: "<ruby>引張試験<rt>ひっぱりしけん</rt></ruby>や<ruby>硬さ試験<rt>かたさしけん</rt></ruby>は、「非破壊試験（ひはかいしけん）」に分類される。", 
+                options: ["正しい (〇)", "正しくない (×)"], 
+                answer: 1, 
+                exp: "正しくない。材料を壊したり変形させる試験は「<ruby>破壊試験<rt>はかいしけん</rt></ruby>」です。" 
+            },
+            { 
+                id: 16, type: "TF", 
+                question: "ノギスやマイクロメータを使用する測定は、「直接測定（ちょくせつそくてい）」である。", 
+                options: ["正しい (〇)", "正しくない (×)"], 
+                answer: 0, 
+                exp: "正しい。目盛りから直接寸法を読み取る方法を直接測定と言います。" 
+            },
+            { 
+                id: 17, type: "TF", 
+                question: "ダイヤルゲージは、比較測定（ひかくそくてい）に使われる測定器である。", 
+                options: ["正しい (〇)", "正しくない (×)"], 
+                answer: 0, 
+                exp: "正しい。基準となる寸法との差を測定するために使用します。" 
+            },
+            { 
+                id: 18, type: "TF", 
+                question: "日本の製図（JIS）で一般的に使われる投影法は、「第三角法（だいさんかくほう）」である。", 
+                options: ["正しい (〇)", "正しくない (×)"], 
+                answer: 0, 
+                exp: "正しい。JIS規格の図面では主に第三角法が用いられます。" 
+            },
+            { 
+                id: 19, type: "TF", 
+                question: "ポカヨケとは、作業者のミス（ポカ）による不良品の発生を未然に防ぐ仕組みのことである。", 
+                options: ["正しい (〇)", "正しくない (×)"], 
+                answer: 0, 
+                exp: "正しい。ポカヨケはフールプルーフ（Fool-proof）とも呼ばれる仕組みです。" 
+            },
+            { 
+                id: 20, type: "TF", 
+                question: "熱処理（ねつしょり）を行うと、金属の硬さや粘り強さを変えることができる。", 
+                options: ["正しい (〇)", "正しくない (×)"], 
+                answer: 0, 
+                exp: "正しい。加熱と冷却により金属の性質を変化させます。" 
+            },
+            { 
+                id: 21, type: "TF", 
+                question: "絶縁体（ぜつえんたい）とは、電気を非常に通しやすい材料のことである。", 
+                options: ["正しい (〇)", "正しくない (×)"], 
+                answer: 1, 
+                exp: "正しくない。電気を通しやすいのは「<ruby>導体<rt>どうたい</rt></ruby>」です。絶縁体は電気を通しにくい材料（ゴムや樹脂）です。" 
+            },
+            { 
+                id: 22, type: "TF", 
+                question: "AED（自動体外式除細動器）は、心肺停止状態の人に電気ショックを与える医療機器である。", 
+                options: ["正しい (〇)", "正しくない (×)"], 
+                answer: 0, 
+                exp: "正しい。緊急時に心臓の動きを正常に戻すために使用されます。" 
+            },
+            { 
+                id: 23, type: "TF", 
+                question: "非常停止ボタン（EMERGENCY STOP）は、休憩時間に機械の電源を切るために毎回使用する。", 
+                options: ["正しい (〇)", "正しくない (×)"], 
+                answer: 1, 
+                exp: "正しくない。非常停止ボタンは【事故や危険が発生した緊急時】のみ使用します。" 
+            },
+            { 
+                id: 24, type: "TF", 
+                question: "フライス盤（Milling machine）は、刃物を回転させて加工物を切削する機械である。", 
+                options: ["正しい (〇)", "正しくない (×)"], 
+                answer: 0, 
+                exp: "正しい。フライス盤は工具（刃物）が回転します。旋盤は材料（工作物）が回転します。" 
+            },
+            { 
+                id: 25, type: "TF", 
+                question: "旋盤（Lathe）作業では、材料を回転させてバイト（刃物）を当てて削る。", 
+                options: ["正しい (〇)", "正しくない (×)"], 
+                answer: 0, 
+                exp: "正しい。旋盤は工作物を回転させて切削加工を行います。" 
+            },
+            { 
+                id: 26, type: "TF", 
+                question: "感電（かんでん）事故を防ぐための基本的な対策として、アース（接地線）を取り付けることが挙げられる。", 
+                options: ["正しい (〇)", "正しくない (×)"], 
+                answer: 0, 
+                exp: "正しい。アースを設置することで漏電時の感電リスクを大幅に減らせます。" 
+            },
+            { 
+                id: 27, type: "TF", 
+                question: "ほうれんそう（報・連・相）の「そう」は、「掃除（そうじ）」のことである。", 
+                options: ["正しい (〇)", "正しくない (×)"], 
+                answer: 1, 
+                exp: "正しくない。「ほうれんそう」は<ruby>報告<rt>ほうこく</rt></ruby>（ほう）・<ruby>連絡<rt>れんらく</rt></ruby>（れん）・<ruby>相談<rt>そうだん</rt></ruby>（そう）の略です。" 
+            },
+            { 
+                id: 28, type: "TF", 
+                question: "安全靴は、重い物が落ちてきたときに足を保護するスチール製の先芯が入っている。", 
+                options: ["正しい (〇)", "正しくない (×)"], 
+                answer: 0, 
+                exp: "正しい。工場では足の保護のため安全靴の着用が義務付けられます。" 
+            },
+            { 
+                id: 29, type: "TF", 
+                question: "KYT（危険予知トレーニング）は、作業前に職場にひそむ危険を話し合い、対策を決める訓練である。", 
+                options: ["正しい (〇)", "正しくない (×)"], 
+                answer: 0, 
+                exp: "正しい。危険に対する感度を高めるためのトレーニングです。" 
+            },
+            { 
+                id: 30, type: "TF", 
+                question: "作業中の事故を防ぐため、決められた標準作業手順書（SOP）を守らず、自分のやりやすい方法で作業してもよい。", 
+                options: ["正しい (〇)", "正しくない (×)"], 
+                answer: 1, 
+                exp: "正しくない。事故を防ぎ品質を保つため、必ず【標準作業手順書】を守らなければなりません。" 
+            },
+
+            // 第二部：多肢選択問題 (10問)
+            { 
+                id: 31, type: "MC", 
+                question: "5S<ruby>活動<rt>かつどう</rt></ruby>の正しい組み合わせとして、適切なものはどれですか。", 
+                options: [
+                    "整理・整頓・清掃・清潔・しつけ",
+                    "整理・安全・清掃・作業・しつけ",
+                    "整頓・準備・清掃・点検・しつけ",
+                    "整理・整頓・確認・清潔・標準"
+                ], 
+                answer: 0, 
+                exp: "5Sとは「<ruby>整理<rt>せいり</rt></ruby>・<ruby>整頓<rt>せいとん</rt></ruby>・<ruby>清掃<rt>せいそう</rt></ruby>・<ruby>清潔<rt>せいけつ</rt></ruby>・しつけ」の頭文字をとったものです。" 
+            },
+            { 
+                id: 32, type: "MC", 
+                question: "職場のコミュニケーション「ほうれんそう」の正しい意味はどれですか。", 
+                options: [
+                    "放置・連絡・操作",
+                    "報告・連絡・相談",
+                    "報告・練習・掃除",
+                    "方針・連絡・相談"
+                ], 
+                answer: 1, 
+                exp: "「<ruby>報告<rt>ほうこく</rt></ruby>」「<ruby>連絡<rt>れんらく</rt></ruby>」「<ruby>相談<rt>そうだん</rt></ruby>」の頭文字です。" 
+            },
+            { 
+                id: 33, type: "MC", 
+                question: "KYT 4ラウンド法において、第2ラウンドで行うことはどれですか。", 
+                options: [
+                    "現状把握（どんな危険があるか洗い出す）",
+                    "本質追及（危険のポイントをしぼり込む）",
+                    "対策樹立（どうすればよいか対策案を出す）",
+                    "目標設定（チームの行動目標を決める）"
+                ], 
+                answer: 1, 
+                exp: "1R:現状把握 → 2R:<ruby>本質追及<rt>ほんしつついきゅう</rt></ruby>（危険ポイント決定） → 3R:対策樹立 → 4R:目標設定。" 
+            },
+            { 
+                id: 34, type: "MC", 
+                question: "製造現場における「QCD」のQ・C・Dの意味の組み合わせで正しいものはどれですか。", 
+                options: [
+                    "Q:品質（Quality）、C:コスト（Cost）、D:納期（Delivery）",
+                    "Q:量（Quantity）、C:コスト（Cost）、D:設計（Design）",
+                    "Q:品質（Quality）、C:点検（Check）、D:納期（Delivery）",
+                    "Q:質問（Question）、C:コスト（Cost）、D:危険（Danger）"
+                ], 
+                answer: 0, 
+                exp: "QCDは Quality（<ruby>品質<rt>ひんしつ</rt></ruby>）、Cost（<ruby>コスト<rt>こすと</rt></ruby>/<ruby>費用<rt>ひよう</rt></ruby>）、Delivery（<ruby>納期<rt>のうき</rt></ruby>/<ruby>納入<rt>のうにゅう</rt></ruby>）を表します。" 
+            },
+            { 
+                id: 35, type: "MC", 
+                question: "バラツキの状態（分布の形）を見るために用いられる、縦棒グラフのようなQC手法はどれですか。", 
+                options: [
+                    "パレート図",
+                    "ヒストグラム",
+                    "散布図",
+                    "チェックシート"
+                ], 
+                answer: 1, 
+                exp: "<ruby>ヒストグラム<rt>ひすとぐらむ</rt></ruby>はデータの散らばり（バラツキ）を視覚的に把握するツールです。" 
+            },
+            { 
+                id: 36, type: "MC", 
+                question: "試験片に急激な衝撃荷重を与えて、材料の粘り強さ（脆さ）を調べる試験はどれですか。", 
+                options: [
+                    "引張試験",
+                    "硬さ試験",
+                    "衝撃試験（シャルピー衝撃試験など）",
+                    "曲げ試験"
+                ], 
+                answer: 2, 
+                exp: "<ruby>衝撃試験<rt>しょうげきしけん</rt></ruby>は衝撃に対する破壊抵抗力を調べます。" 
+            },
+            { 
+                id: 37, type: "MC", 
+                question: "ねじの原理を利用して、板厚や外径を0.01mm単位で精密に測定する工具はどれですか。", 
+                options: [
+                    "ノギス",
+                    "マイクロメータ",
+                    "直尺（金属ものさし）",
+                    "ハイトゲージ"
+                ], 
+                answer: 1, 
+                exp: "<ruby>マイクロメータ<rt>まいくろめーた</rt></ruby>は精密ねじ機構を使って厚みや外径を高精度に測ります。" 
+            },
+            { 
+                id: 38, type: "MC", 
+                question: "機械の漏電による感電事故を防ぐための最も基本的な安全措置はどれですか。", 
+                options: [
+                    "アース（接地）を接続する",
+                    "機械を濡れた布で拭く",
+                    "作業場の照明を暗くする",
+                    "薄い綿手袋をはめる"
+                ], 
+                answer: 0, 
+                exp: "アース（<ruby>接地<rt>せっち</rt></ruby>）を繋ぐことで、漏れた電流を地面に逃がして感電を防ぎます。" 
+            },
+            { 
+                id: 39, type: "MC", 
+                question: "円筒形状の材料を回転させ、バイトという刃物を当てて外径を削る加工機械はどれですか。", 
+                options: [
+                    "フライス盤",
+                    "旋盤（せんばん）",
+                    "研削盤",
+                    "プレス機"
+                ], 
+                answer: 1, 
+                exp: "<ruby>旋盤<rt>せんばん</rt></ruby>（Lathe）は材料を回転させて削る代表的な工作機械です。" 
+            },
+            { 
+                id: 40, type: "MC", 
+                question: "黄色の三角枠に「稲妻（雷）のマーク」が描かれている安全標識の意味はどれですか。", 
+                options: [
+                    "タバコを吸うな（禁煙）",
+                    "感電注意（電気ショックの危険）",
+                    "頭上注意（落下物の危険）",
+                    "立ち入り禁止"
+                ], 
+                answer: 1, 
+                exp: "稲妻のマークは「<ruby>感電注意<rt>かんでんちゅうい</rt></ruby>」を意味する危険標識です。" 
+            }
+        ];
+
+        let currentQIndex = 0;
+        let userAnswers = new Array(questions.length).fill(null);
+        let flagged = new Array(questions.length).fill(false);
+        let timeLeft = 60 * 60;
+        let timerInterval;
+
+        function initQuiz() {
+            renderSidebar();
+            loadQuestion(0);
+            startTimer();
+        }
+
+        function renderSidebar() {
+            const grid = document.getElementById('nav-grid');
+            grid.innerHTML = '';
+            questions.forEach((q, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'nav-btn';
+                btn.id = `nav-${idx}`;
+                btn.innerText = idx + 1;
+                btn.onclick = () => loadQuestion(idx);
+                grid.appendChild(btn);
+            });
+            updateSidebarStatus();
+        }
+
+        function updateSidebarStatus() {
+            questions.forEach((q, idx) => {
+                const btn = document.getElementById(`nav-${idx}`);
+                btn.className = 'nav-btn';
+                if (idx === currentQIndex) btn.classList.add('active');
+                if (userAnswers[idx] !== null) btn.classList.add('answered');
+                if (flagged[idx]) btn.classList.add('flagged');
+            });
+        }
+
+        function loadQuestion(index) {
+            currentQIndex = index;
+            const q = questions[index];
+
+            document.getElementById('q-number').innerText = `問題 ${index + 1} / ${questions.length} (${q.type === 'TF' ? '〇×問題' : '選択問題'})`;
+            document.getElementById('q-text').innerHTML = q.question;
+            document.getElementById('flag-check').checked = flagged[index];
+
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+
+            q.options.forEach((opt, optIdx) => {
+                const item = document.createElement('label');
+                item.className = 'option-item';
+                
+                const radio = document.createElement('input');
+                radio.type = 'radio';
+                radio.name = 'option';
+                radio.value = optIdx;
+                radio.checked = userAnswers[index] === optIdx;
+                radio.onchange = () => selectOption(optIdx);
+
+                const span = document.createElement('span');
+                span.className = 'option-label';
+                span.innerHTML = opt;
+
+                item.appendChild(radio);
+                item.appendChild(span);
+                container.appendChild(item);
+            });
+
+            document.getElementById('btn-prev').disabled = index === 0;
+            document.getElementById('btn-next').innerText = index === questions.length - 1 ? '終了' : '次へ ►';
+
+            updateSidebarStatus();
+        }
+
+        function selectOption(optIdx) {
+            userAnswers[currentQIndex] = optIdx;
+            updateSidebarStatus();
+        }
+
+        function toggleFlag() {
+            flagged[currentQIndex] = document.getElementById('flag-check').checked;
+            updateSidebarStatus();
+        }
+
+        function prevQuestion() {
+            if (currentQIndex > 0) loadQuestion(currentQIndex - 1);
+        }
+
+        function nextQuestion() {
+            if (currentQIndex < questions.length - 1) {
+                loadQuestion(currentQIndex + 1);
+            } else {
+                confirmSubmit();
+            }
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                const min = Math.floor(timeLeft / 60);
+                const sec = timeLeft % 60;
+                document.getElementById('timer').innerText = `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    alert("制限時間になりました。");
+                    calculateResult();
+                }
+            }, 1000);
+        }
+
+        function confirmSubmit() {
+            const unanswered = userAnswers.filter(a => a === null).length;
+            let msg = "試験を終了して結果を表示しますか？";
+            if (unanswered > 0) {
+                msg = `まだ未回答の問題が ${unanswered} 問あります。\n` + msg;
+            }
+            if (confirm(msg)) {
+                clearInterval(timerInterval);
+                calculateResult();
+            }
+        }
+
+        function calculateResult() {
+            let correct = 0;
+            const listContainer = document.getElementById('explanation-list');
+            listContainer.innerHTML = '';
+
+            questions.forEach((q, idx) => {
+                const isCorrect = userAnswers[idx] === q.answer;
+                if (isCorrect) correct++;
+
+                const div = document.createElement('div');
+                div.className = `explanation-item ${isCorrect ? 'correct' : 'incorrect'}`;
+                
+                const userAnsText = userAnswers[idx] !== null ? q.options[userAnswers[idx]] : "未回答";
+                const rightAnsText = q.options[q.answer];
+
+                div.innerHTML = `
+                    <strong>問${idx + 1}: ${q.question}</strong><br>
+                    <span>あなたの回答: <b style="color:${isCorrect ? '#28a745':'#dc3545'}">${userAnsText}</b></span> | 
+                    <span>正解: <b>${rightAnsText}</b></span><br>
+                    <small style="color:#444">【解説】${q.exp}</small>
+                `;
+                listContainer.appendChild(div);
+            });
+
+            const percentage = Math.round((correct / questions.length) * 100);
+            document.getElementById('final-score').innerText = `${percentage}%`;
+            document.getElementById('correct-count').innerText = `${correct} / ${questions.length}`;
+
+            const statusBox = document.getElementById('pass-status');
+            if (percentage >= 65) {
+                statusBox.className = "pass-status status-pass";
+                statusBox.innerText = "【合格】おめでとうございます！基準点をクリアしました。";
+            } else {
+                statusBox.className = "pass-status status-fail";
+                statusBox.innerText = "【不合格】残念！もう少し復習して再挑戦しましょう。";
+            }
+
+            document.getElementById('result-modal').style.display = 'flex';
+        }
+
+        window.onload = initQuiz;
+    </script>
+</body>
+</html>
